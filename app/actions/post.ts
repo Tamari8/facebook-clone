@@ -4,9 +4,6 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { writeFile, mkdir } from "fs/promises";
-import path from "path";
-
 // ---- POSTS ----
 
 export async function createPost(formData: FormData) {
@@ -27,14 +24,9 @@ export async function createPost(formData: FormData) {
     let imageUrl = null;
     if (image && image.size > 0) {
       const bytes = await image.arrayBuffer();
-      const buffer = Buffer.from(bytes);
-      const filename = Date.now() + "-" + image.name.replace(/\s/g, "_");
-      const uploadDir = path.join(process.cwd(), "public", "uploads");
-      
-      await mkdir(uploadDir, { recursive: true });
-      await writeFile(path.join(uploadDir, filename), buffer);
-      
-      imageUrl = `/uploads/${filename}`;
+      const base64 = Buffer.from(bytes).toString("base64");
+      const mime = image.type || "image/jpeg";
+      imageUrl = `data:${mime};base64,${base64}`;
     }
 
     await prisma.post.create({
