@@ -46,7 +46,6 @@ export const authOptions: NextAuthOptions = {
     },
   },
   secret: process.env.NEXTAUTH_SECRET || "facebook-clone-super-secret-key-2026",
-  trustHost: true,
   pages: {
     signIn: "/login",
   },
