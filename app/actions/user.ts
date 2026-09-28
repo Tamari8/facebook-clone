@@ -13,24 +13,34 @@ export async function updateProfile(formData: FormData) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.email) return { success: false, message: "არ ხართ ავტორიზებული!" };
 
-  const bio = formData.get("bio") as string;
+  const bio = formData.get("bio") as string | null;
   const image = formData.get("image") as File | null;
+  const coverImage = formData.get("coverImage") as File | null;
+  const removeImage = formData.get("removeImage") === "true";
+  const removeCover = formData.get("removeCover") === "true";
 
   try {
     const user = await prisma.user.findUnique({ where: { email: session.user.email } });
     if (!user) return { success: false };
 
     let imageUrl = user.image;
-    if (image && image.size > 0) {
+    if (removeImage) {
+      imageUrl = null;
+    } else if (image && image.size > 0) {
       const bytes = await image.arrayBuffer();
-      const buffer = Buffer.from(bytes);
-      const filename = Date.now() + "-" + image.name.replace(/\s/g, "_");
-      const uploadDir = path.join(process.cwd(), "public", "uploads");
-      
-      await mkdir(uploadDir, { recursive: true });
-      await writeFile(path.join(uploadDir, filename), buffer);
-      
-      imageUrl = `/uploads/${filename}`;
+      const base64 = Buffer.from(bytes).toString("base64");
+      const mime = image.type || "image/jpeg";
+      imageUrl = `data:${mime};base64,${base64}`;
+    }
+
+    let coverUrl = user.coverImage;
+    if (removeCover) {
+      coverUrl = null;
+    } else if (coverImage && coverImage.size > 0) {
+      const bytes = await coverImage.arrayBuffer();
+      const base64 = Buffer.from(bytes).toString("base64");
+      const mime = coverImage.type || "image/jpeg";
+      coverUrl = `data:${mime};base64,${base64}`;
     }
 
     await prisma.user.update({
@@ -38,15 +48,94 @@ export async function updateProfile(formData: FormData) {
       data: {
         bio: bio !== null ? bio : user.bio,
         image: imageUrl,
+        coverImage: coverUrl,
       },
     });
 
     revalidatePath("/profile");
+    revalidatePath(`/profile/${user.id}`);
     revalidatePath("/");
     return { success: true };
   } catch (error) {
     console.error("Update Profile Error:", error);
     return { success: false, message: "პროფილის განახლება ვერ მოხერხდა." };
+  }
+}
+
+export async function updateCoverPhoto(formData: FormData) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.email) return { success: false };
+
+  const file = formData.get("coverImage") as File | null;
+  if (!file || file.size === 0) return { success: false };
+
+  try {
+    const user = await prisma.user.findUnique({ where: { email: session.user.email } });
+    if (!user) return { success: false };
+
+    const bytes = await file.arrayBuffer();
+    const base64 = Buffer.from(bytes).toString("base64");
+    const mime = file.type || "image/jpeg";
+    const coverUrl = `data:${mime};base64,${base64}`;
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { coverImage: coverUrl },
+    });
+
+    revalidatePath("/profile");
+    revalidatePath(`/profile/${user.id}`);
+    revalidatePath("/");
+    return { success: true };
+  } catch (err) {
+    console.error(err);
+    return { success: false };
+  }
+}
+
+export async function deleteProfilePhoto() {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.email) return { success: false };
+
+  try {
+    const user = await prisma.user.findUnique({ where: { email: session.user.email } });
+    if (!user) return { success: false };
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { image: null },
+    });
+
+    revalidatePath("/profile");
+    revalidatePath(`/profile/${user.id}`);
+    revalidatePath("/");
+    return { success: true };
+  } catch (err) {
+    console.error(err);
+    return { success: false };
+  }
+}
+
+export async function deleteCoverPhoto() {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.email) return { success: false };
+
+  try {
+    const user = await prisma.user.findUnique({ where: { email: session.user.email } });
+    if (!user) return { success: false };
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { coverImage: null },
+    });
+
+    revalidatePath("/profile");
+    revalidatePath(`/profile/${user.id}`);
+    revalidatePath("/");
+    return { success: true };
+  } catch (err) {
+    console.error(err);
+    return { success: false };
   }
 }
 

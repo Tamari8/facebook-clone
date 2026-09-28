@@ -14,6 +14,7 @@ model User {
   email                  String       @unique
   password               String
   image                  String?
+  coverImage             String?
   bio                    String?
   createdAt              DateTime     @default(now())
   posts                  Post[]
@@ -26,6 +27,7 @@ model User {
   messagesSent           Message[]      @relation("MessagesSent")
   messagesReceived       Message[]      @relation("MessagesReceived")
   stories                Story[]
+  storyReactions         StoryReaction[]
 }
 
 model Friendship {
@@ -120,5 +122,19 @@ model Story {
   createdAt DateTime @default(now())
   expiresAt DateTime
 
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reactions StoryReaction[]
+}
+
+model StoryReaction {
+  id        String   @id @default(cuid())
+  storyId   String
+  userId    String
+  emoji     String   // 👍, ❤️, 😂, 😮, 😢, 😡
+  createdAt DateTime @default(now())
+
+  story     Story    @relation(fields: [storyId], references: [id], onDelete: Cascade)
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([storyId, userId])
 }
