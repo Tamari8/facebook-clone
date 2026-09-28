@@ -7,12 +7,14 @@ import { sendPasswordResetEmail } from "@/lib/mail";
 export async function registerUser(formData: FormData) {
   const name = formData.get("name") as string;
   const lastname = formData.get("lastname") as string;
-  const email = formData.get("email") as string;
+  const rawEmail = formData.get("email") as string;
   const password = formData.get("password") as string;
 
-  if (!email || !password) {
+  if (!rawEmail || !password) {
     return { success: false, message: "ელ.ფოსტა და პაროლი სავალდებულოა!" };
   }
+
+  const email = rawEmail.toLowerCase().trim();
 
   try {
     const existingUser = await prisma.user.findUnique({
@@ -24,7 +26,7 @@ export async function registerUser(formData: FormData) {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const fullName = name && lastname ? `${name} ${lastname}` : name || "უცნობი მომხმარებელი";
+    const fullName = name && lastname ? `${name.trim()} ${lastname.trim()}` : (name?.trim() || "უცნობი მომხმარებელი");
     const avatarUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(fullName)}`;
 
     await prisma.user.create({
@@ -37,9 +39,12 @@ export async function registerUser(formData: FormData) {
     });
 
     return { success: true, message: "რეგისტრაცია წარმატებით დასრულდა!" };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Register Error:", error);
-    return { success: false, message: "დაფიქსირდა შეცდომა რეგისტრაციისას." };
+    return { 
+      success: false, 
+      message: `დაფიქსირდა შეცდომა: ${error?.message || "სცადეთ თავიდან"}` 
+    };
   }
 }
 
