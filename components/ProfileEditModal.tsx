@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import { updateProfile, deleteProfilePhoto, deleteCoverPhoto } from "@/app/actions/user";
+import { compressImage } from "@/lib/imageUtils";
 
 type UserType = {
   id: string;
@@ -65,13 +66,15 @@ export default function ProfileEditModal({ currentUser }: { currentUser: UserTyp
     if (removeImage) {
       formData.append("removeImage", "true");
     } else if (imageFile) {
-      formData.append("image", imageFile);
+      const compressedImage = await compressImage(imageFile, 800);
+      formData.append("image", compressedImage);
     }
 
     if (removeCover) {
       formData.append("removeCover", "true");
     } else if (coverFile) {
-      formData.append("coverImage", coverFile);
+      const compressedCover = await compressImage(coverFile, 1200);
+      formData.append("coverImage", compressedCover);
     }
 
     const result = await updateProfile(formData);

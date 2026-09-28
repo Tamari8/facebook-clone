@@ -3,7 +3,7 @@ import { PrismaClient } from "@prisma/client";
 const globalForPrisma = global as unknown as { prisma: PrismaClient };
 
 const NEON_DATABASE_URL =
-  "postgresql://neondb_owner:npg_0UksdoLt8rYn@ep-falling-hall-b5f8fn28-pooler.c-7.us-east-2.aws.neon.tech/neondb?sslmode=require";
+  "postgresql://neondb_owner:npg_0UksdoLt8rYn@ep-falling-hall-b5f8fn28-pooler.c-7.us-east-2.aws.neon.tech/neondb?sslmode=require&pgbouncer=true";
 
 export const prisma =
   globalForPrisma.prisma ||

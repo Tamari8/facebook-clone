@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import { createStory } from "@/app/actions/story";
+import { compressImage } from "@/lib/imageUtils";
 
 const GRADIENTS = [
   { name: "Facebook Blue", value: "linear-gradient(135deg, #0866FF 0%, #1877F2 100%)" },
@@ -53,7 +54,8 @@ export default function CreateStoryModal({
     const formData = new FormData();
 
     if (tab === "PHOTO" && imageFile) {
-      formData.append("image", imageFile);
+      const compressedImage = await compressImage(imageFile, 1200);
+      formData.append("image", compressedImage);
     } else {
       formData.append("text", storyText.trim());
       formData.append("bgColor", selectedGradient);

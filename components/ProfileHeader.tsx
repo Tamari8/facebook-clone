@@ -6,6 +6,7 @@ import ProfileEditModal from "./ProfileEditModal";
 import CreateStoryModal from "./CreateStoryModal";
 import FriendButton from "@/app/profile/[id]/FriendButton";
 import { updateCoverPhoto, deleteCoverPhoto, updateProfile, deleteProfilePhoto } from "@/app/actions/user";
+import { compressImage } from "@/lib/imageUtils";
 
 type ProfileUserType = {
   id: string;
@@ -40,7 +41,8 @@ export default function ProfileHeader({
 
     setCoverLoading(true);
     const formData = new FormData();
-    formData.append("coverImage", file);
+    const compressedCover = await compressImage(file, 1200);
+    formData.append("coverImage", compressedCover);
 
     const res = await updateCoverPhoto(formData);
     setCoverLoading(false);
@@ -57,7 +59,8 @@ export default function ProfileHeader({
 
     setAvatarLoading(true);
     const formData = new FormData();
-    formData.append("image", file);
+    const compressedImage = await compressImage(file, 800);
+    formData.append("image", compressedImage);
 
     const res = await updateProfile(formData);
     setAvatarLoading(false);

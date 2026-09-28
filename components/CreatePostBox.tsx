@@ -3,6 +3,7 @@
 import { useState, useRef } from "react";
 import Link from "next/link";
 import { createPost } from "@/app/actions/post";
+import { compressImage } from "@/lib/imageUtils";
 import { 
   LiveVideoIcon, 
   PhotoVideoIcon, 
@@ -61,11 +62,11 @@ export default function CreatePostBox({
 
     setLoading(true);
     const postContent = feeling ? `${content}\n\n— ${feeling}` : content;
-
     const formData = new FormData();
     formData.append("content", postContent);
     if (imageFile) {
-      formData.append("image", imageFile);
+      const compressedImage = await compressImage(imageFile, 1200);
+      formData.append("image", compressedImage);
     }
 
     // Call server action
